@@ -3,6 +3,7 @@
 namespace steevanb\DoctrineStats\Doctrine\ORM\Event;
 
 use Doctrine\Common\EventArgs;
+use Doctrine\DBAL\Driver\PDOStatement;
 
 class PreHydrationEventArgs extends EventArgs
 {
@@ -14,13 +15,18 @@ class PreHydrationEventArgs extends EventArgs
     /** @var string */
     protected $hydratorClassName;
 
+    /** @var PDOStatement|null */
+    protected $stmt;
+
     /**
      * @param $hydratorClassName
+     * @param PDOStatement $stmt
      */
-    public function __construct($hydratorClassName)
+    public function __construct($hydratorClassName, PDOStatement $stmt = null)
     {
         $this->eventId = uniqid('hydration_');
         $this->hydratorClassName = $hydratorClassName;
+        $this->stmt = $stmt;
     }
 
     /**
@@ -37,5 +43,13 @@ class PreHydrationEventArgs extends EventArgs
     public function getHydratorClassName()
     {
         return $this->hydratorClassName;
+    }
+
+    /**
+     * @return PDOStatement|null
+     */
+    public function getStmt()
+    {
+        return $this->stmt;
     }
 }

@@ -24,7 +24,7 @@ trait OverloadedHydratorTrait
      */
     public function hydrateAll($stmt, $resultSetMapping, array $hints = [])
     {
-        $eventId = $this->dispatchPreHydrationEvent();
+        $eventId = $this->dispatchPreHydrationEvent($stmt);
         $return = parent::hydrateAll($stmt, $resultSetMapping, $hints);
         $this->dispatchPostHydrationEvent($eventId);
 
@@ -39,6 +39,19 @@ trait OverloadedHydratorTrait
         $eventId = $this->dispatchPreHydrationEvent();
         $return = parent::hydrateRow();
         $this->dispatchPostHydrationEvent($eventId);
+
+        return $return;
+    }
+
+    /**
+     * @param array $row
+     * @param array $result
+     * @return mixed
+     */
+    protected function hydrateRowData(array $row, array &$result)
+    {
+        $this->dispatchHydrateRowDataEvent($row);
+        $return = parent::hydrateRowData($row, $result);
 
         return $return;
     }

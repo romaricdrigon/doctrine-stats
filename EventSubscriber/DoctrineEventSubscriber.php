@@ -7,6 +7,7 @@ use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Proxy\Proxy;
 use steevanb\DoctrineStats\Bridge\DoctrineCollectorInterface;
+use steevanb\DoctrineStats\Doctrine\ORM\Event\HydrateRowDataEventArgs;
 use steevanb\DoctrineStats\Doctrine\ORM\Event\PostCreateEntityEventArgs;
 use steevanb\DoctrineStats\Doctrine\ORM\Event\PostHydrationEventArgs;
 use steevanb\DoctrineStats\Doctrine\ORM\Event\PostLazyLoadEventArgs;
@@ -22,6 +23,9 @@ class DoctrineEventSubscriber implements EventSubscriber
 
     /** @var DoctrineCollectorInterface  */
     protected $collector;
+
+    /** @var bool */
+    protected $dumpRecords;
 
     /**
      * @param DoctrineCollectorInterface $collector
@@ -41,8 +45,28 @@ class DoctrineEventSubscriber implements EventSubscriber
             PreHydrationEventArgs::EVENT_NAME,
             PostHydrationEventArgs::EVENT_NAME,
             PostCreateEntityEventArgs::EVENT_NAME,
+            HydrateRowDataEventArgs::EVENT_NAME,
             Events::postLoad
         ];
+    }
+
+    /**
+     * @param bool $dump
+     * @return $this
+     */
+    public function setDumpRecords($dump)
+    {
+        $this->dumpRecords = $dump;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getDumpRecords()
+    {
+        return $this->dumpRecords;
     }
 
     /**
@@ -83,6 +107,26 @@ class DoctrineEventSubscriber implements EventSubscriber
     }
 
     /**
+     * @param PostCreateEntityEventArgs $eventArgs
+     */
+    public function postCreateEntity(PostCreateEntityEventArgs $eventArgs)
+    {
+        $this->collector->addHydratedEntity(
+            $eventArgs->getHydratorClassName(),
+            $eventArgs->getClassName(),
+            $eventArgs->getClassIdentifiers()
+        );
+    }
+
+    /**
+     * @param HydrateRowDataEventArgs $eventArgs
+     */
+    public function hydrateRowData(HydrateRowDataEventArgs $eventArgs)
+    {
+        $this->collector->addRow($eventArgs->getRow());
+    }
+
+    /**
      * @param LifecycleEventArgs $eventArgs
      */
     public function postLoad(LifecycleEventArgs $eventArgs)
@@ -97,17 +141,5 @@ class DoctrineEventSubscriber implements EventSubscriber
         if ($eventArgs->getEntityManager()->getUnitOfWork()->isInIdentityMap($eventArgs->getEntity())) {
             $this->collector->addManagedEntity($className, $metaData->getIdentifierValues($eventArgs->getEntity()));
         }
-    }
-
-    /**
-     * @param PostCreateEntityEventArgs $eventArgs
-     */
-    public function postCreateEntity(PostCreateEntityEventArgs $eventArgs)
-    {
-        $this->collector->addHydratedEntity(
-            $eventArgs->getHydratorClassName(),
-            $eventArgs->getClassName(),
-            $eventArgs->getClassIdentifiers()
-        );
     }
 }

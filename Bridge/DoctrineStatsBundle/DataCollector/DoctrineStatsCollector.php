@@ -38,6 +38,9 @@ class DoctrineStatsCollector extends DataCollector implements DoctrineCollectorI
     /** @var array */
     protected $hydratedEntities = [];
 
+    /** @var array */
+    protected $rows = [];
+
     /**
      * @param SqlLogger $sqlLogger
      */
@@ -185,6 +188,21 @@ class DoctrineStatsCollector extends DataCollector implements DoctrineCollectorI
     }
 
     /**
+     * @param array $row
+     * @return $this
+     */
+    public function addRow(array $row)
+    {
+        $queryIndex = $this->sqlLogger->getCurrentQueryIndex();
+        if (array_key_exists($queryIndex, $this->rows) === false) {
+            $this->rows[$queryIndex] = [];
+        }
+        $this->rows[$queryIndex][] = $row;
+
+        return $this;
+    }
+
+    /**
      * @param Request $request
      * @param Response $response
      * @param \Exception|null $exception
@@ -200,7 +218,8 @@ class DoctrineStatsCollector extends DataCollector implements DoctrineCollectorI
             'managedEntitiesAlert' => $this->managedEntitiesAlert,
             'lazyLoadedEntitiesAlert' => $this->lazyLoadedEntitiesAlert,
             'hydrationTimeAlert' => $this->hydrationTimeAlert,
-            'hydratedEntities' => $this->hydratedEntities
+            'hydratedEntities' => $this->hydratedEntities,
+            'rows' => $this->rows
         ];
     }
 
@@ -222,12 +241,15 @@ class DoctrineStatsCollector extends DataCollector implements DoctrineCollectorI
                         'lazyLoadedEntities' => [],
                         'hydrationTime' => 0,
                         'hydrationTimePercent' => 0,
+                        'rows' => []
                     ];
                 }
                 $return[$query['sql']]['queryTime'] += $query['time'] * 1000;
                 $return[$query['sql']]['data'][] = ['params' => $query['params']];
                 $return[$query['sql']]['backtraces'][$index] =
                     $query['backtrace'] === null ? null : \DumpBacktrace::getDump($query['backtrace']);
+                $return[$query['sql']]['rows'][$index] =
+                    array_key_exists($index, $this->data['rows']) ? $this->data['rows'][$index] : [];
 
                 foreach ($this->data['lazyLoadedEntities'] as $lazyLoadedEntity) {
                     if ($lazyLoadedEntity['queryIndex'] === $index) {

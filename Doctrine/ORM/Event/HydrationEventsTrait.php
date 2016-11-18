@@ -2,6 +2,7 @@
 
 namespace steevanb\DoctrineStats\Doctrine\ORM\Event;
 
+use Doctrine\DBAL\Driver\PDOStatement;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 
@@ -13,11 +14,12 @@ trait HydrationEventsTrait
     abstract protected function getEntityManager();
 
     /**
+     * @param PDOStatement|null $stmt
      * @return string
      */
-    protected function dispatchPreHydrationEvent()
+    protected function dispatchPreHydrationEvent(PDOStatement $stmt = null)
     {
-        $eventArgs = new PreHydrationEventArgs(get_class($this));
+        $eventArgs = new PreHydrationEventArgs(get_class($this), $stmt);
         $this->getEntityManager()->getEventManager()->dispatchEvent(PreHydrationEventArgs::EVENT_NAME, $eventArgs);
 
         return $eventArgs->getEventId();
@@ -51,6 +53,18 @@ trait HydrationEventsTrait
 
         $eventArgs = new PostCreateEntityEventArgs(get_class($this), $classMetaData->name, $identifiers);
         $this->getEntityManager()->getEventManager()->dispatchEvent(PostCreateEntityEventArgs::EVENT_NAME, $eventArgs);
+
+        return $this;
+    }
+
+    /**
+     * @param array $row
+     * @return $this
+     */
+    protected function dispatchHydrateRowDataEvent(array $row)
+    {
+        $eventArgs = new HydrateRowDataEventArgs($row);
+        $this->getEntityManager()->getEventManager()->dispatchEvent(HydrateRowDataEventArgs::EVENT_NAME, $eventArgs);
 
         return $this;
     }

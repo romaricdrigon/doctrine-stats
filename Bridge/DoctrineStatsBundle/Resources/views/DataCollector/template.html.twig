@@ -288,6 +288,15 @@
                                 data-toggle-alt-content="Hide parameters"
                             >Show parameters</a>
 
+                            {% for queryIndex, rows in queries.rows %}
+                                &nbsp;&nbsp;&nbsp;&nbsp;
+                                <a
+                                    class="link-inverse sf-toggle"
+                                    data-toggle-selector="#query-rows-{{ queryIndex }}-{{ loop.index }}"
+                                    data-toggle-alt-content="Hide {{ rows|length }} row{% if rows|length > 1 %}s{% endif %} #{{ loop.index}}"
+                                >Show {{ rows|length }} row{% if rows|length > 1 %}s{% endif %} #{{ loop.index }}</a>
+                            {% endfor %}
+
                             {% set countLazyLoadedEntities = 0 %}
                             {% for lazyLoadedEntities in queries.lazyLoadedEntities %}
                                 {% set countLazyLoadedEntities = countLazyLoadedEntities + lazyLoadedEntities|length %}
@@ -336,6 +345,33 @@
                                     {% endfor %}
                                 </div>
                             {% endif %}
+
+                            {% for queryIndex, rows in queries.rows %}
+                                <div id="query-rows-{{ queryIndex }}-{{ loop.index }}">
+                                    {% if rows|length == 0 %}
+                                        No row to hydrate returned by this query.
+                                    {% else %}
+                                        <table>
+                                            <thead>
+                                                <th>#</th>
+                                                {% for name, value in rows.0 %}
+                                                    <th style="white-space: nowrap">{{ name }}</th>
+                                                {% endfor %}
+                                            </thead>
+                                            <tbody>
+                                                {% for row in rows %}
+                                                    <tr>
+                                                        <td style="white-space: nowrap">#{{ loop.index }}</td>
+                                                        {% for value in row %}
+                                                            <td style="white-space: nowrap">{{ value }}</td>
+                                                        {% endfor %}
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
 
                             {% for backtrace in queries.backtraces %}
                                 <div id="query-backtraces-{{ queryIndex }}-{{ loop.index }}">

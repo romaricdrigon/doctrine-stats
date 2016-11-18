@@ -34,4 +34,10 @@ interface DoctrineCollectorInterface
      * @return $this
      */
     public function addHydratedEntity($hydratorClassName, $className, $classIdentifiers);
+
+    /**
+     * @param array $row
+     * @return $this
+     */
+    public function addRow(array $row);
 }
